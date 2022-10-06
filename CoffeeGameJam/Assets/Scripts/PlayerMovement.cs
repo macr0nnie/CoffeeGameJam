@@ -4,64 +4,156 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-   
-    private float horizontal;
-    [SerializeField]private float speed = 8f;
-    [SerializeField]private float jumpingPower = 16f;
-    private bool isFacingRight = true;
+    /*
+    2D player movement script
+    contains method of animations
+    date: October 6th 2022
+    */
+    public Animator anim;
+    private float moveInput;
+    private float speed = 8f;
+    private float jumpforce = 4f;
+    private bool isFacingRight = false;
 
+    //can do actions variables bools
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
 
+    //jump variabales
+    private bool canJump;
+    private bool isJumping;
+    private float jumpTimecounter;
+    public float jumpTime;
+
+    //dash variables
+    private bool isDashing;
+    private bool canDash;
+    private float dashCooldown;
+    private float dashingTime;
+    private float dashingPower;
+
+    //trail renderer && partical generations
+    //add collisions
+
+
+    private void Start()
+    {
+        anim = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody2D>();
+    }
     void Update()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
-
-        if (Input.GetButtonDown("Jump") && IsGrounded())
+        //get horizontal input
+        moveInput = Input.GetAxisRaw("Horizontal");
+        //make character face the right way
+        if (moveInput > 0 && !isFacingRight)
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
+            Flip();
+        }
+        else if (moveInput < 0 && isFacingRight)
+        {
+            Flip();
         }
 
-        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
-        }
+        ManageAnimations();
 
-        Flip();
-
+        Jump();
     }
-
     private void FixedUpdate()
     {
-        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
+
+        Move();
+
     }
 
+    private void Jump()
+    {
+        //needs to make fall time faster too slow 
+        //spacebar functionality not working correctly
+        //should hold down space to jump higher might remove later
+
+        //check if feet touch the ground and space button is pressed
+        if (IsGrounded() == true && Input.GetKeyDown(KeyCode.Space))
+        {
+            isJumping = true;
+            jumpTimecounter = jumpTime;
+            rb.velocity = Vector2.up * jumpforce;
+        }
+
+        if (Input.GetKey(KeyCode.Space) && isJumping == true)
+        {
+            if (jumpTimecounter > 0)
+            {
+                rb.velocity = Vector2.up * jumpforce;
+                jumpTimecounter -= Time.deltaTime;
+            }
+            else
+            {
+                isJumping = false;
+            }
+        }
+
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            isJumping = false;
+        }
+    }
+
+    private void ManageAnimations()
+    {
+        if (IsGrounded() == false)
+        {
+            //play jump
+            anim.SetBool("isJumping", true);
+        }
+        else if (moveInput == 0)
+        {
+            anim.SetBool("isJumping", false);
+            anim.SetBool("isRunning", false);
+        }
+        else if (isDashing == true)
+        {
+            anim.SetBool("isDashing", true);
+        }
+        else
+        {
+            anim.SetBool("isJumping", false);
+            anim.SetBool("isRunning", true);
+        }
+
+    }
+    private void Dash()
+    {
+        //if can dash is true
+
+
+
+
+
+
+    }
+    private void Move()
+    {
+        rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+    }
     private bool IsGrounded()
     {
         return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
     }
-
     private void Flip()
     {
-        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
+        isFacingRight = !isFacingRight;
+        transform.Rotate(0f, 180f, 0f);
+    }
+    //Player Collisions + stealing candy
+    void OnTriggerEnter2D(Collider2D col)
+    {
+        if (Input.GetKeyDown(KeyCode.F))
         {
-            isFacingRight = !isFacingRight;
-            Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
-            transform.localScale = localScale;
-        }
-    }
-
-    //Player stealing candy mechanic 
-    void OnTriggerStay2D(Collider2D col){
-             
-        if(Input.GetKeyDown(KeyCode.F)){
             Debug.Log(col + "jit");
-            col.GetComponent<NPC>().isMad = true;  
+            col.GetComponent<NPC>().isMad = true;
         }
     }
-
-
 }
 
