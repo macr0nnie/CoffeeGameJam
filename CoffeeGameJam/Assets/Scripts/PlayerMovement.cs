@@ -151,8 +151,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F))
         {
-            Debug.Log(col + "jit");
-            col.GetComponent<NPC>().isMad = true;
+            Debug.Log(col + "git");
+           // col.GetComponent<NPC>().isMad = true;
         }
     }
 }
